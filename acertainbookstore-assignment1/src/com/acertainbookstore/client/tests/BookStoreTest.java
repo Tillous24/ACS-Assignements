@@ -708,7 +708,7 @@ public class BookStoreTest {
 		int k = n + 10;
 
 		try {
-			/* Get 3 best rated book */
+			/* Get all rated book */
 			List<Book> booksTopRated = client.getTopRatedBooks(k);
 			assertEquals(n, booksTopRated.size());
 			assertEquals(true, booksTopRated.contains(book1));
@@ -717,6 +717,57 @@ public class BookStoreTest {
 			assertEquals(true, booksTopRated.contains(book4));
 			assertEquals(true, booksTopRated.contains(book5));
 			assertEquals(false, booksTopRated.contains(getDefaultBook()));
+		}
+		catch (BookStoreException e) {
+			fail("Unexpected exception: " + e.getMessage());
+		}
+	}
+
+	/**
+	 * Test: Get all books in demand
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 *
+	 **/
+	@Test
+	public void testGetBooksInDemand() throws BookStoreException {
+		// Not in demand
+		StockBook book1 = new ImmutableStockBook(TEST_ISBN + 1, "The Art of Computer Programming", "Donald Knuth",
+				(float) 300, NUM_COPIES, 0, 10, 40, false);
+		// In demand
+		StockBook book2 = new ImmutableStockBook(TEST_ISBN + 2, "The C Programming Language",
+				"Dennis Ritchie and Brian Kerninghan", (float) 50, NUM_COPIES, 2, 1, 5, false);
+		// Not in demand
+		StockBook book3 = new ImmutableStockBook(TEST_ISBN + 3, "The Art of Computer Programming", "Donald Knuth",
+				(float) 300, NUM_COPIES, 0, 10, 10, false);
+		// In demand
+		StockBook book4 = new ImmutableStockBook(TEST_ISBN + 4, "The C Programming Language",
+				"Dennis Ritchie and Brian Kerninghan", (float) 50, NUM_COPIES, 1, 10, 20, false);
+		// Not in demand
+		StockBook book5 = new ImmutableStockBook(TEST_ISBN + 5, "The C Programming Language",
+				"Dennis Ritchie and Brian Kerninghan", (float) 50, NUM_COPIES, 0, 10, 20, false);
+
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(book1);
+		booksToAdd.add(book2);
+		booksToAdd.add(book3);
+		booksToAdd.add(book4);
+		booksToAdd.add(book5);
+		storeManager.addBooks(booksToAdd);
+
+		try {
+			/* Get books in demand */
+			List<StockBook> booksInDemand = storeManager.getBooksInDemand();
+			assertEquals(2, booksInDemand.size());
+			assertEquals(false, booksInDemand.contains(book1));
+			assertEquals(true, booksInDemand.contains(book2));
+			assertEquals(false, booksInDemand.contains(book3));
+			assertEquals(true, booksInDemand.contains(book4));
+			assertEquals(false, booksInDemand.contains(book5));
+			assertEquals(false, booksInDemand.contains(getDefaultBook()));
+			assertEquals(true, booksInDemand.get(0) instanceof ImmutableStockBook);
+			assertEquals(true, booksInDemand.get(1) instanceof ImmutableStockBook);
 		}
 		catch (BookStoreException e) {
 			fail("Unexpected exception: " + e.getMessage());

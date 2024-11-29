@@ -56,6 +56,7 @@ public final class BookStoreConstants {
 
 	/** The Constant PROPERTY_KEY_LOCAL_TEST. */
 	public static final String PROPERTY_KEY_LOCAL_TEST = "localtest";
+	// public static final String PROPERTY_KEY_LOCAL_TEST = "localhost";
 
 	/** The Constant PROPERTY_KEY_SERVER_PORT. */
 	public static final String PROPERTY_KEY_SERVER_PORT = "port";
