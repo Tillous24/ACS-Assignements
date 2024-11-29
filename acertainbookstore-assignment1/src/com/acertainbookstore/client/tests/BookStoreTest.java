@@ -14,6 +14,7 @@ import org.junit.Test;
 
 import com.acertainbookstore.business.Book;
 import com.acertainbookstore.business.BookCopy;
+import com.acertainbookstore.business.BookRating;
 import com.acertainbookstore.business.CertainBookStore;
 import com.acertainbookstore.business.ImmutableStockBook;
 import com.acertainbookstore.business.StockBook;
@@ -349,6 +350,34 @@ public class BookStoreTest {
 				&& booksInStorePreTest.size() == booksInStorePostTest.size());
 	}
 
+	/**
+	 * Test: Rate book with success one time
+	 *
+	 **/
+	@Test
+	public void testRateDefaultBook() throws BookStoreException {
+		/* Create a BookRating set */
+		HashSet<BookRating> ratings = new HashSet<BookRating>();
+		/* Example Rating */
+		ratings.add(new BookRating(TEST_ISBN, 4));
+
+		try {
+			/* Rate the book */
+			client.rateBooks(ratings);
+
+			/* Validate the results */
+			Set<Integer> isbnSet = new HashSet<>();
+			isbnSet.add(TEST_ISBN);
+			List<StockBook> listBooks = storeManager.getBooksByISBN(isbnSet);
+			StockBook ratedBook = listBooks.get(0);
+			assertEquals(4, ratedBook.getTotalRating());
+			assertEquals(1, ratedBook.getNumTimesRated());
+
+		}
+		catch (BookStoreException e) {
+			fail("Unexpected exception: " + e.getMessage());
+		}
+	}
 	/**
 	 * Tear down after class.
 	 *
