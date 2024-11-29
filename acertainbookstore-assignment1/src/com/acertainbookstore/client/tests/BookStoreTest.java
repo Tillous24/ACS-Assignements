@@ -435,7 +435,7 @@ public class BookStoreTest {
 	 *
 	 **/
 	@Test
-	public void testRateDefaultBookNonExistingISBN() throws BookStoreException {
+	public void testRateBookNonExistingISBN() throws BookStoreException {
 		/* Create a BookRating set */
 		HashSet<BookRating> ratings = new HashSet<BookRating>();
 		/* Example Rating */
@@ -448,6 +448,137 @@ public class BookStoreTest {
 		}
 		catch (BookStoreException e) {
 			assertEquals("Book with ISBN " + (TEST_ISBN - 1) + " not found",e.getMessage());
+		}
+	}
+
+	/**
+	 * Test: Rate book with negative ISBN
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 *
+	 **/
+	@Test
+	public void testRateBookNegativeISBN() throws BookStoreException {
+		/* Create a BookRating set */
+		HashSet<BookRating> ratings = new HashSet<BookRating>();
+		/* Example Rating */
+		ratings.add(new BookRating(-1, 4));
+
+		try {
+			/* Rate the book */
+			client.rateBooks(ratings);
+			fail("Expected BookStoreException to be thrown");
+		}
+		catch (BookStoreException e) {
+			assertEquals("Invalid input: ISBN must be positive and rating must be between 0 and 5",e.getMessage());
+		}
+	}
+
+
+	/**
+	 * Test: Rate book with rating below zero
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 *
+	 **/
+	@Test
+	public void testRateDefaultBookLowRating() throws BookStoreException {
+		/* Create a BookRating set */
+		HashSet<BookRating> ratings = new HashSet<BookRating>();
+		/* Example Rating */
+		ratings.add(new BookRating(TEST_ISBN, -1));
+
+		try {
+			/* Rate the book */
+			client.rateBooks(ratings);
+			fail("Expected BookStoreException to be thrown");
+		}
+		catch (BookStoreException e) {
+			assertEquals("Invalid input: ISBN must be positive and rating must be between 0 and 5",e.getMessage());
+		}
+	}
+
+	/**
+	 * Test: Rate book with rating above five
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 *
+	 **/
+	@Test
+	public void testRateDefaultBookHighRating() throws BookStoreException {
+		/* Create a BookRating set */
+		HashSet<BookRating> ratings = new HashSet<BookRating>();
+		/* Example Rating */
+		ratings.add(new BookRating(TEST_ISBN, 6));
+
+		try {
+			/* Rate the book */
+			client.rateBooks(ratings);
+			fail("Expected BookStoreException to be thrown");
+		}
+		catch (BookStoreException e) {
+			assertEquals("Invalid input: ISBN must be positive and rating must be between 0 and 5",e.getMessage());
+		}
+	}
+
+	/**
+	 * Test: All-or-nothing semantics
+	 *      Rate books with success one time and with failure the next time
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 *
+	 **/
+	@Test
+	public void testRateBooksAllOrNothing() throws BookStoreException {
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 1, "The Art of Computer Programming", "Donald Knuth",
+				(float) 300, NUM_COPIES, 0, 0, 0, false));
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 2, "The C Programming Language",
+				"Dennis Ritchie and Brian Kerninghan", (float) 50, NUM_COPIES, 0, 0, 0, false));
+
+		storeManager.addBooks(booksToAdd);
+
+		/* Create a BookRating sets */
+		Set<BookRating> ratingsSet1 = new HashSet<BookRating>();
+		Set<BookRating> ratingsSet2 = new HashSet<BookRating>();
+
+		/* Example Rating */
+		ratingsSet1.add(new BookRating(TEST_ISBN, 1));
+		ratingsSet1.add(new BookRating(TEST_ISBN + 1, 2));
+		ratingsSet1.add(new BookRating(TEST_ISBN + 2, 3));
+		ratingsSet2.add(new BookRating(TEST_ISBN, 1));
+		ratingsSet2.add(new BookRating(TEST_ISBN + 1, 2));
+		ratingsSet2.add(new BookRating(TEST_ISBN - 2, 3));
+
+		try {
+			/* Rate the book */
+			client.rateBooks(ratingsSet1);
+			client.rateBooks(ratingsSet2);
+			fail("Expected BookStoreException to be thrown");
+		}
+		catch (BookStoreException e) {
+			assertEquals("Book with ISBN " + (TEST_ISBN - 2) + " not found",e.getMessage());
+
+			/* Validate the results */
+			Set<Integer> isbnSet1 = new HashSet<>();
+			Set<Integer> isbnSet2 = new HashSet<>();
+			Set<Integer> isbnSet3 = new HashSet<>();
+			isbnSet1.add(TEST_ISBN);
+			isbnSet2.add(TEST_ISBN + 1);
+			isbnSet3.add(TEST_ISBN + 2);
+			List<StockBook> listBooks1 = storeManager.getBooksByISBN(isbnSet1);
+			List<StockBook> listBooks2 = storeManager.getBooksByISBN(isbnSet2);
+			List<StockBook> listBooks3 = storeManager.getBooksByISBN(isbnSet3);
+			assertEquals(1, listBooks1.get(0).getTotalRating());
+			assertEquals(1, listBooks1.get(0).getNumTimesRated());
+			assertEquals(2, listBooks2.get(0).getTotalRating());
+			assertEquals(1, listBooks2.get(0).getNumTimesRated());
+			assertEquals(3, listBooks3.get(0).getTotalRating());
+			assertEquals(1, listBooks3.get(0).getNumTimesRated());
 		}
 	}
 
