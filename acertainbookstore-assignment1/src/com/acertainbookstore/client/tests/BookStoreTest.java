@@ -355,7 +355,7 @@ public class BookStoreTest {
 	 *
 	 **/
 	@Test
-	public void testRateDefaultBook() throws BookStoreException {
+	public void testRateDefaultBookOneTime() throws BookStoreException {
 		/* Create a BookRating set */
 		HashSet<BookRating> ratings = new HashSet<BookRating>();
 		/* Example Rating */
@@ -378,6 +378,49 @@ public class BookStoreTest {
 			fail("Unexpected exception: " + e.getMessage());
 		}
 	}
+
+	/**
+	 * Test: Rate book with success several time
+	 *
+	 **/
+	@Test
+	public void testRateDefaultBookSeveralTimes() throws BookStoreException {
+
+		/* Create a BookRating sets */
+		Set<BookRating> ratingsSet1 = new HashSet<BookRating>();
+		Set<BookRating> ratingsSet2 = new HashSet<BookRating>();
+		Set<BookRating> ratingsSet3 = new HashSet<BookRating>();
+		Set<BookRating> ratingsSet4 = new HashSet<BookRating>();
+		Set<BookRating> ratingsSet5 = new HashSet<BookRating>();
+		/* Example Rating */
+		ratingsSet1.add(new BookRating(TEST_ISBN, 1));
+		ratingsSet2.add(new BookRating(TEST_ISBN, 2));
+		ratingsSet3.add(new BookRating(TEST_ISBN, 3));
+		ratingsSet4.add(new BookRating(TEST_ISBN, 4));
+		ratingsSet5.add(new BookRating(TEST_ISBN, 5));
+
+		try {
+			/* Rate the book */
+			client.rateBooks(ratingsSet1);
+			client.rateBooks(ratingsSet2);
+			client.rateBooks(ratingsSet3);
+			client.rateBooks(ratingsSet4);
+			client.rateBooks(ratingsSet5);
+
+			/* Validate the results */
+			Set<Integer> isbnSet = new HashSet<>();
+			isbnSet.add(TEST_ISBN);
+			List<StockBook> listBooks = storeManager.getBooksByISBN(isbnSet);
+			StockBook ratedBook = listBooks.get(0);
+			assertEquals(15, ratedBook.getTotalRating());
+			assertEquals(5, ratedBook.getNumTimesRated());
+
+		}
+		catch (BookStoreException e) {
+			fail("Unexpected exception: " + e.getMessage());
+		}
+	}
+
 	/**
 	 * Tear down after class.
 	 *
