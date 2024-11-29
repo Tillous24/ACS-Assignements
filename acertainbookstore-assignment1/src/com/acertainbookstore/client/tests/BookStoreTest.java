@@ -599,7 +599,7 @@ public class BookStoreTest {
 
 	/**
 	 * Test: Get best rated book
-	 *
+	 *			and test if instance of ImmutableBook
 	 * @throws BookStoreException
 	 *             the book store exception
 	 *
@@ -619,11 +619,110 @@ public class BookStoreTest {
 			/* Get best rated book */
 			List<Book> booksTopRated = client.getTopRatedBooks(k);
 			assertEquals(TEST_ISBN + 2, booksTopRated.get(0).getISBN());
+			assertEquals(true, booksTopRated.get(0) instanceof ImmutableBook);
 		}
 		catch (BookStoreException e) {
 			fail("Unexpected exception: " + e.getMessage());
 		}
 	}
+
+	/**
+	 * Test: Get K top rated book
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 *
+	 **/
+	@Test
+	public void testGetTopRatedBooksBestThree() throws BookStoreException {
+		// avr rate = 4
+		StockBook book1 = new ImmutableStockBook(TEST_ISBN + 1, "The Art of Computer Programming", "Donald Knuth",
+				(float) 300, NUM_COPIES, 0, 10, 40, false);
+		// avr rate = 5
+		StockBook book2 = new ImmutableStockBook(TEST_ISBN + 2, "The C Programming Language",
+				"Dennis Ritchie and Brian Kerninghan", (float) 50, NUM_COPIES, 0, 1, 5, false);
+		// avr rate = 1
+		StockBook book3 = new ImmutableStockBook(TEST_ISBN + 3, "The Art of Computer Programming", "Donald Knuth",
+				(float) 300, NUM_COPIES, 0, 10, 10, false);
+		// avr rate = 2
+		StockBook book4 = new ImmutableStockBook(TEST_ISBN + 4, "The C Programming Language",
+				"Dennis Ritchie and Brian Kerninghan", (float) 50, NUM_COPIES, 0, 10, 20, false);
+
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(book1);
+		booksToAdd.add(book2);
+		booksToAdd.add(book3);
+		booksToAdd.add(book4);
+		storeManager.addBooks(booksToAdd);
+
+		int k = 3;
+
+		try {
+			/* Get 3 best rated book */
+			List<Book> booksTopRated = client.getTopRatedBooks(k);
+			assertEquals(k, booksTopRated.size());
+			assertEquals(true, booksTopRated.contains(book1));
+			assertEquals(true, booksTopRated.contains(book2));
+			assertEquals(false, booksTopRated.contains(book3));
+			assertEquals(true, booksTopRated.contains(book4));
+		}
+		catch (BookStoreException e) {
+			fail("Unexpected exception: " + e.getMessage());
+		}
+	}
+
+	/**
+	 * Test: Get all books when K>N
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 *
+	 **/
+	@Test
+	public void testGetTopRatedBooksKLargerThanN() throws BookStoreException {
+		// avr rate = 4
+		StockBook book1 = new ImmutableStockBook(TEST_ISBN + 1, "The Art of Computer Programming", "Donald Knuth",
+				(float) 300, NUM_COPIES, 0, 10, 40, false);
+		// avr rate = 5
+		StockBook book2 = new ImmutableStockBook(TEST_ISBN + 2, "The C Programming Language",
+				"Dennis Ritchie and Brian Kerninghan", (float) 50, NUM_COPIES, 0, 1, 5, false);
+		// avr rate = 1
+		StockBook book3 = new ImmutableStockBook(TEST_ISBN + 3, "The Art of Computer Programming", "Donald Knuth",
+				(float) 300, NUM_COPIES, 0, 10, 10, false);
+		// avr rate = 2
+		StockBook book4 = new ImmutableStockBook(TEST_ISBN + 4, "The C Programming Language",
+				"Dennis Ritchie and Brian Kerninghan", (float) 50, NUM_COPIES, 0, 10, 20, false);
+		// avr rate = 2
+		StockBook book5 = new ImmutableStockBook(TEST_ISBN + 5, "The C Programming Language",
+				"Dennis Ritchie and Brian Kerninghan", (float) 50, NUM_COPIES, 0, 10, 20, false);
+
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(book1);
+		booksToAdd.add(book2);
+		booksToAdd.add(book3);
+		booksToAdd.add(book4);
+		booksToAdd.add(book5);
+		storeManager.addBooks(booksToAdd);
+
+		int n = storeManager.getBooks().size() - 1; // Default book not rated
+		int k = n + 10;
+
+		try {
+			/* Get 3 best rated book */
+			List<Book> booksTopRated = client.getTopRatedBooks(k);
+			assertEquals(n, booksTopRated.size());
+			assertEquals(true, booksTopRated.contains(book1));
+			assertEquals(true, booksTopRated.contains(book2));
+			assertEquals(true, booksTopRated.contains(book3));
+			assertEquals(true, booksTopRated.contains(book4));
+			assertEquals(true, booksTopRated.contains(book5));
+			assertEquals(false, booksTopRated.contains(getDefaultBook()));
+		}
+		catch (BookStoreException e) {
+			fail("Unexpected exception: " + e.getMessage());
+		}
+	}
+
 
 	/**
 	 * Tear down after class.
