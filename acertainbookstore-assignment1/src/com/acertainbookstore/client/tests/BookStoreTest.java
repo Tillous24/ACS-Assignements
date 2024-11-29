@@ -6,18 +6,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.acertainbookstore.business.*;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.acertainbookstore.business.Book;
-import com.acertainbookstore.business.BookCopy;
-import com.acertainbookstore.business.BookRating;
-import com.acertainbookstore.business.CertainBookStore;
-import com.acertainbookstore.business.ImmutableStockBook;
-import com.acertainbookstore.business.StockBook;
 import com.acertainbookstore.client.BookStoreHTTPProxy;
 import com.acertainbookstore.client.StockManagerHTTPProxy;
 import com.acertainbookstore.interfaces.BookStore;
@@ -579,6 +574,54 @@ public class BookStoreTest {
 			assertEquals(1, listBooks2.get(0).getNumTimesRated());
 			assertEquals(3, listBooks3.get(0).getTotalRating());
 			assertEquals(1, listBooks3.get(0).getNumTimesRated());
+		}
+	}
+
+	/**
+	 * Test: Get negative number of top rated books
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 *
+	 **/
+	@Test
+	public void testGetTopRatedBooksNegativeK() throws BookStoreException {
+		int k = -1;
+		try {
+			/* Get top rated books */
+			client.getTopRatedBooks(k);
+			fail("Expected BookStoreException to be thrown");
+		}
+		catch (BookStoreException e) {
+			assertEquals("Number of books requested must be non-negative.",e.getMessage());
+		}
+	}
+
+	/**
+	 * Test: Get best rated book
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 *
+	 **/
+	@Test
+	public void testGetTopRatedBooksNumberOne() throws BookStoreException {
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 1, "The Art of Computer Programming", "Donald Knuth",
+				(float) 300, NUM_COPIES, 0, 10, 40, false));
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 2, "The C Programming Language",
+				"Dennis Ritchie and Brian Kerninghan", (float) 50, NUM_COPIES, 0, 1, 5, false));
+		storeManager.addBooks(booksToAdd);
+
+		int k = 1;
+
+		try {
+			/* Get best rated book */
+			List<Book> booksTopRated = client.getTopRatedBooks(k);
+			assertEquals(TEST_ISBN + 2, booksTopRated.get(0).getISBN());
+		}
+		catch (BookStoreException e) {
+			fail("Unexpected exception: " + e.getMessage());
 		}
 	}
 
