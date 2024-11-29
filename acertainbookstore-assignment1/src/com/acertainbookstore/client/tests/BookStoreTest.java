@@ -353,6 +353,9 @@ public class BookStoreTest {
 	/**
 	 * Test: Rate book with success one time
 	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 *
 	 **/
 	@Test
 	public void testRateDefaultBookOneTime() throws BookStoreException {
@@ -381,6 +384,9 @@ public class BookStoreTest {
 
 	/**
 	 * Test: Rate book with success several time
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
 	 *
 	 **/
 	@Test
@@ -418,6 +424,30 @@ public class BookStoreTest {
 		}
 		catch (BookStoreException e) {
 			fail("Unexpected exception: " + e.getMessage());
+		}
+	}
+
+	/**
+	 * Test: Rate book with non-existing ISBN
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 *
+	 **/
+	@Test
+	public void testRateDefaultBookNonExistingISBN() throws BookStoreException {
+		/* Create a BookRating set */
+		HashSet<BookRating> ratings = new HashSet<BookRating>();
+		/* Example Rating */
+		ratings.add(new BookRating(TEST_ISBN-1, 4));
+
+		try {
+			/* Rate the book */
+			client.rateBooks(ratings);
+			fail("Expected BookStoreException to be thrown");
+		}
+		catch (BookStoreException e) {
+			assertEquals("Book with ISBN " + (TEST_ISBN - 1) + " not found",e.getMessage());
 		}
 	}
 
