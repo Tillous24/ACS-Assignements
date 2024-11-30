@@ -774,6 +774,38 @@ public class BookStoreTest {
 		}
 	}
 
+	/**
+	 * Tests the getTopRatedBooks method for all-or-nothing semantics.
+	 *
+	 * @throws BookStoreException the book store exception
+	 */
+	@Test
+	public void testGetTopRatedBooksAllOrNothing() throws BookStoreException {
+	    // Set of books to add with different ratings
+	    Set<StockBook> booksToAdd = new HashSet<StockBook>();
+	
+	    // Add some books with various ratings
+	    booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 1, "Book 1", "Author 1", (float) 100, NUM_COPIES, 5, 5, 25, true)); 
+	    booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 2, "Book 2", "Author 2", (float) 50, NUM_COPIES, 2, 3, 6, false)); 
+	    booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 3, "Book 3", "Author 3", (float) 75, NUM_COPIES, 4, 4, 16, false)); 
+		
+	    storeManager.addBooks(booksToAdd);
+	
+	    // We retrieve top-rated books, assuming you want the top 1 rated book
+	    List<Book> topRatedBooks = client.getTopRatedBooks(1);
+	
+	    // We check that we only have the books that meet the top rating criteria
+	    assertTrue(topRatedBooks.size() == 1);
+	    assertTrue(topRatedBooks.get(0).getISBN() == TEST_ISBN + 1); 
+	
+	    // We now simulate a failure case where no top-rated books are available
+	    // We remove all books and try fetching top-rated books again
+	    storeManager.removeAllBooks();
+	
+	    topRatedBooks = client.getTopRatedBooks(1); // We fetch top-rated books again, this time with no books in the store
+	    assertTrue(topRatedBooks.isEmpty());  // If no books are in the store, an empty list should be returned
+	}
+
 
 	/**
 	 * Tear down after class.
