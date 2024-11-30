@@ -55,8 +55,8 @@ public final class BookStoreConstants {
 	public static final String NULL_INPUT = "null input parameters";
 
 	/** The Constant PROPERTY_KEY_LOCAL_TEST. */
-	public static final String PROPERTY_KEY_LOCAL_TEST = "localtest";
-	// public static final String PROPERTY_KEY_LOCAL_TEST = "localhost";
+	// public static final String PROPERTY_KEY_LOCAL_TEST = "localtest";
+	public static final String PROPERTY_KEY_LOCAL_TEST = "localhost";
 
 	/** The Constant PROPERTY_KEY_SERVER_PORT. */
 	public static final String PROPERTY_KEY_SERVER_PORT = "port";
