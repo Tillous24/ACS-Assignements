@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors; // added
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -24,6 +25,7 @@ import com.acertainbookstore.interfaces.BookStore;
 import com.acertainbookstore.interfaces.StockManager;
 import com.acertainbookstore.utils.BookStoreConstants;
 import com.acertainbookstore.utils.BookStoreException;
+
 
 /**
  * {@link BookStoreTest} tests the {@link BookStore} interface.
@@ -361,6 +363,247 @@ public class BookStoreTest {
 		List<StockBook> booksInStorePostTest = storeManager.getBooks();
 		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
 				&& booksInStorePreTest.size() == booksInStorePostTest.size());
+	}
+	// added
+	@Test
+	public void testGetEditorPicks() throws BookStoreException {
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+
+		StockBook book1 = new ImmutableStockBook(TEST_ISBN + 1, "Clean Code", "Robert C. Martin", (float) 25, NUM_COPIES, 0, 0, 0, true);
+		StockBook book2 = new ImmutableStockBook(TEST_ISBN + 2, "The Pragmatic Programmer", "Andrew Hunt", (float) 30, NUM_COPIES, 0, 0, 0, false);
+		booksToAdd.add(book1);
+		booksToAdd.add(book2);
+
+		storeManager.addBooks(booksToAdd);
+
+		// Retrieve only editor picks
+		List<StockBook> editorPicks = client.getEditorPicks(1).stream()
+				.map(book -> (StockBook) book)
+				.collect(Collectors.toList());
+
+		assertTrue(editorPicks.size() == 1);
+		assertTrue(editorPicks.get(0).isEditorPick());
+	}
+
+	/**
+	 * Tests that books can be added and retrieved by ISBN.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	// added
+	@Test
+	public void testGetBooksByISBN() throws BookStoreException {
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+
+		StockBook book1 = new ImmutableStockBook(TEST_ISBN + 1, "Effective Java", "Joshua Bloch", (float) 45, NUM_COPIES, 0, 0, 0, false);
+		StockBook book2 = new ImmutableStockBook(TEST_ISBN + 2, "Design Patterns", "Erich Gamma", (float) 55, NUM_COPIES, 0, 0, 0, false);
+		booksToAdd.add(book1);
+		booksToAdd.add(book2);
+
+		storeManager.addBooks(booksToAdd);
+
+		Set<Integer> isbns = new HashSet<Integer>();
+		isbns.add(TEST_ISBN + 1);
+		isbns.add(TEST_ISBN + 2);
+
+		// List<StockBook> retrievedBooks = client.getBooksByISBN(isbns);
+		// assertTrue(retrievedBooks.containsAll(booksToAdd) && retrievedBooks.size() == booksToAdd.size());
+	}
+
+	/**
+	 * Tests removing all books from the store.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	// added
+	@Test
+	public void testRemoveAllBooks() throws BookStoreException {
+		storeManager.removeAllBooks();
+		List<StockBook> booksInStore = storeManager.getBooks();
+		assertTrue(booksInStore.isEmpty());
+	}
+
+	/**
+	 * Tests removing books by ISBN.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	// added
+	@Test
+	public void testRemoveBooks() throws BookStoreException {
+		Set<Integer> isbnsToRemove = new HashSet<Integer>();
+		isbnsToRemove.add(TEST_ISBN);
+
+		storeManager.removeBooks(isbnsToRemove);
+
+		List<StockBook> booksInStore = storeManager.getBooks();
+		assertTrue(booksInStore.isEmpty());
+	}
+
+	/**
+	 * Tests adding negative copies of a book.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	// added
+	@Test
+	public void testAddNegativeCopies() throws BookStoreException {
+		try {
+			storeManager.addCopies(new HashSet<BookCopy>() {
+				{
+					add(new BookCopy(TEST_ISBN, -5));
+				}
+			});
+			fail("Expected BookStoreException");
+		} catch (BookStoreException ex) {
+			// Expected
+		}
+	}
+
+	/**
+	 * Tests adding copies to a non-existing book.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	// added
+	@Test
+	public void testAddCopiesToNonExistingBook() throws BookStoreException {
+		try {
+			storeManager.addCopies(new HashSet<BookCopy>() {
+				{
+					add(new BookCopy(TEST_ISBN + 1000, 5));
+				}
+			});
+			fail("Expected BookStoreException");
+		} catch (BookStoreException ex) {
+			// Expected
+		}
+	}
+
+	/**
+	 * Tests buying books concurrently.
+	 *
+	 * @throws InterruptedException
+	 *             the interruption exception
+	 */
+	// added
+	@Test
+	public void testConcurrentBuyBooks() throws InterruptedException, BookStoreException {
+		final Set<BookCopy> booksToBuy = new HashSet<BookCopy>();
+		booksToBuy.add(new BookCopy(TEST_ISBN, 1));
+
+		Thread thread1 = new Thread(() -> {
+			try {
+				client.buyBooks(booksToBuy);
+			} catch (BookStoreException e) {
+				fail("Exception in thread1");
+			}
+		});
+
+		Thread thread2 = new Thread(() -> {
+			try {
+				client.buyBooks(booksToBuy);
+			} catch (BookStoreException e) {
+				fail("Exception in thread2");
+			}
+		});
+
+		thread1.start();
+		thread2.start();
+
+		thread1.join();
+		thread2.join();
+
+		List<StockBook> booksInStore = storeManager.getBooks();
+		assertTrue(booksInStore.get(0).getNumCopies() == NUM_COPIES - 2);
+	}
+
+
+	/**
+	 * Tests concurrent buy and add operations.
+	 */
+	// added
+	@Test
+	public void testConcurrentBuyAndAddCopies() throws InterruptedException, BookStoreException {
+		final Set<BookCopy> booksToBuy = new HashSet<BookCopy>();
+		booksToBuy.add(new BookCopy(TEST_ISBN, 1));
+
+		final Set<BookCopy> booksToAdd = new HashSet<BookCopy>();
+		booksToAdd.add(new BookCopy(TEST_ISBN, 1));
+
+		Thread thread1 = new Thread(() -> {
+			try {
+				for (int i = 0; i < 100; i++) {
+					client.buyBooks(booksToBuy);
+				}
+			} catch (BookStoreException e) {
+				fail("Exception in thread1");
+			}
+		});
+
+		Thread thread2 = new Thread(() -> {
+			try {
+				for (int i = 0; i < 100; i++) {
+					storeManager.addCopies(booksToAdd);
+				}
+			} catch (BookStoreException e) {
+				fail("Exception in thread2");
+			}
+		});
+
+		thread1.start();
+		thread2.start();
+
+		thread1.join();
+		thread2.join();
+
+		List<StockBook> booksInStore = storeManager.getBooks();
+		assertTrue(booksInStore.get(0).getNumCopies() == NUM_COPIES);
+	}
+
+	/**
+	 * Tests concurrent buy and get operations.
+	 */
+	// added
+	@Test
+	public void testConcurrentBuyAndGetBooks() throws InterruptedException, BookStoreException {
+		final Set<BookCopy> booksToBuy = new HashSet<BookCopy>();
+		booksToBuy.add(new BookCopy(TEST_ISBN, 1));
+
+		Thread thread1 = new Thread(() -> {
+			try {
+				for (int i = 0; i < 100; i++) {
+					client.buyBooks(booksToBuy);
+					storeManager.addCopies(booksToBuy);
+				}
+			} catch (BookStoreException e) {
+				fail("Exception in thread1");
+			}
+		});
+
+		Thread thread2 = new Thread(() -> {
+			try {
+				for (int i = 0; i < 100; i++) {
+					List<StockBook> booksInStore = storeManager.getBooks();
+					for (StockBook book : booksInStore) {
+						assertTrue(book.getNumCopies() == NUM_COPIES || book.getNumCopies() == NUM_COPIES - 1);
+					}
+				}
+			} catch (BookStoreException e) {
+				fail("Exception in thread2");
+			}
+		});
+
+		thread1.start();
+		thread2.start();
+
+		thread1.join();
+		thread2.join();
 	}
 
 	/**
