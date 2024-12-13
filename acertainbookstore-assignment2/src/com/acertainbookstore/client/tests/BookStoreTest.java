@@ -605,8 +605,166 @@ public class BookStoreTest {
 		thread1.join();
 		thread2.join();
 	}
+	/**
+	 * Tests that adding a book with a negative number of copies throws an exception.
+	 *
+	 * @throws BookStoreException the book store exception
+	 */
+	// added
+	@Test
+	public void testAddBookWithNegativeCopies() throws BookStoreException {
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN, "Test Book", "Test Author", (float) 10, -5, 0, 0, 0, false));
+
+		try {
+			storeManager.addBooks(booksToAdd);
+			fail("Adding a book with negative copies should throw an exception.");
+		} catch (BookStoreException ex) {
+			// Expected behavior
+		}
+	}
 
 	/**
+	 * Tests the removal of all books.
+	 *
+	 * @throws BookStoreException the book store exception
+	 */
+	// added
+	@Test
+	public void testRemoveAllBooks2() throws BookStoreException {
+		// Add some books
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(getDefaultBook());
+		storeManager.addBooks(booksToAdd);
+
+		// Verify that the book is added
+		List<StockBook> booksInStoreBefore = storeManager.getBooks();
+		assertTrue(booksInStoreBefore.size() > 0);
+
+		// Remove all books
+		storeManager.removeAllBooks();
+
+		// Verify that no books are left in store
+		List<StockBook> booksInStoreAfter = storeManager.getBooks();
+		assertTrue(booksInStoreAfter.isEmpty());
+	}
+
+	/**
+	 * Tests that only available copies are bought (checking available quantity after purchase).
+	 *
+	 * @throws BookStoreException the book store exception
+	 */
+	// added
+	@Test
+	public void testBuyAvailableCopies() throws BookStoreException {
+		// Add books to store
+		addBooks(TEST_ISBN, 10);
+
+		// Try to buy 5 copies
+		Set<BookCopy> booksToBuy = new HashSet<BookCopy>();
+		booksToBuy.add(new BookCopy(TEST_ISBN, 5));
+		client.buyBooks(booksToBuy);
+
+		// Verify that only the available books are bought
+		List<StockBook> booksInStore = storeManager.getBooks();
+		StockBook boughtBook = booksInStore.stream()
+				.filter(book -> book.getISBN() == TEST_ISBN)
+				.findFirst()
+				.orElseThrow(() -> new BookStoreException("Book not found in the store"));
+
+		// Check that the number of copies in the store is reduced by 5
+		assertTrue(boughtBook.getNumCopies() == 5);
+	}
+
+	/**
+	 * Tests that adding books with the same ISBN does not duplicate the entries.
+	 *
+	 * @throws BookStoreException the book store exception
+	 */
+	// added
+	@Test
+	public void testAddDuplicateBooks() throws BookStoreException {
+		// Add a book
+		addBooks(TEST_ISBN, 5);
+
+		// Try adding the same book again
+		addBooks(TEST_ISBN, 5);
+
+		// Verify that the book count is 10, not duplicated
+		List<StockBook> booksInStore = storeManager.getBooks();
+		StockBook book = booksInStore.stream()
+				.filter(b -> b.getISBN() == TEST_ISBN)
+				.findFirst()
+				.orElseThrow(() -> new BookStoreException("Book not found in the store"));
+
+		assertTrue(book.getNumCopies() == 10);
+	}
+
+	/**
+	 * Tests that retrieving books with an empty list of ISBNs returns an empty result.
+	 *
+	 * @throws BookStoreException the book store exception
+	 */
+	@Test
+	// added
+	public void testGetBooksWithEmptyIsbnList() throws BookStoreException {
+		Set<Integer> emptyIsbnList = new HashSet<>();
+		List<Book> books = client.getBooks(emptyIsbnList);
+
+		// Verify that the returned list of books is empty
+		assertTrue(books.isEmpty());
+	}
+
+	/**
+	 * Tests the addition of books with varied prices.
+	 *
+	 * @throws BookStoreException the book store exception
+	 */
+	// added
+	@Test
+	public void testAddBooksWithVariedPrices() throws BookStoreException {
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 1, "Cheap Book", "Author A", (float) 5, 10, 0, 0, 0, false));
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 2, "Expensive Book", "Author B", (float) 100, 5, 0, 0, 0, false));
+
+		storeManager.addBooks(booksToAdd);
+
+		// Verify that both books are added and can be retrieved
+		Set<Integer> isbnList = new HashSet<>();
+		isbnList.add(TEST_ISBN + 1);
+		isbnList.add(TEST_ISBN + 2);
+
+		List<Book> books = client.getBooks(isbnList);
+		assertTrue(books.size() == 2);
+	}
+
+	/**
+	 * Tests the behavior when trying to add the same ISBN with different titles.
+	 *
+	 * @throws BookStoreException the book store exception
+	 */
+	// added
+	//@Test
+	//public void testAddBookWithDifferentTitles() throws BookStoreException {
+	//	Set<StockBook> booksToAdd = new HashSet<StockBook>();
+	//	booksToAdd.add(new ImmutableStockBook(TEST_ISBN, "Book One", "Author A", (float) 10, 5, 0, 0, 0, false));
+
+	//	storeManager.addBooks(booksToAdd);
+
+		// Try to add the same ISBN with a different title
+	//	booksToAdd.clear();
+	//	booksToAdd.add(new ImmutableStockBook(TEST_ISBN, "Book Two", "Author B", (float) 10, 5, 0, 0, 0, false));
+
+	//	try {
+	//		storeManager.addBooks(booksToAdd);
+	//		fail("Adding a book with the same ISBN but different title should throw an exception.");
+	//	} catch (BookStoreException ex) {
+			// Expected behavior
+	//	}
+	//}
+
+
+/**
 	 * Tear down after class.
 	 *
 	 * @throws BookStoreException
