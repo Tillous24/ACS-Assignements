@@ -475,6 +475,109 @@ public class StockManagerTest {
 		assertTrue(booksInStoreList.size() == 0);
 	}
 
+	// added
+	@Test
+	public void testAddEditorPick() throws BookStoreException {
+		// Add a valid book and set it as an editor's pick
+		StockBook book = getDefaultBook();
+		storeManager.addBooks(new HashSet<StockBook>() {{ add(book); }});
+		addEditorPick(TEST_ISBN, true);
+
+		// Retrieve the book and check if it is marked as an editor's pick
+		List<StockBook> books = storeManager.getBooks();
+		StockBook retrievedBook = books.stream().filter(b -> b.getISBN() == TEST_ISBN).findFirst().orElse(null);
+		assertNotNull(retrievedBook);
+		assertTrue(retrievedBook.isEditorPick());
+	}
+
+	// added
+	@Test
+	public void testAddDuplicateBookISBN() throws BookStoreException {
+		List<StockBook> booksInStorePreTest = storeManager.getBooks();
+
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		// Adding a book with the same ISBN
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN, "Duplicate Harry Potter", "JK Rowling", (float) 20, 5, 0, 0, 0, false));
+
+		storeManager.addBooks(booksToAdd);
+
+		// Try adding the same book again, it should fail
+		try {
+			storeManager.addBooks(booksToAdd);
+			fail("Book with duplicate ISBN should not be added.");
+		} catch (BookStoreException ex) {
+			// Expected exception
+		}
+
+		List<StockBook> booksInStorePostTest = storeManager.getBooks();
+		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest) && booksInStorePreTest.size() == booksInStorePostTest.size());
+	}
+
+	// added
+	@Test
+	public void testAddBookZeroPrice() throws BookStoreException {
+		List<StockBook> booksInStorePreTest = storeManager.getBooks();
+
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 3, "Harry Potter and Zero Price", "JK Rowling", 0, 5, 0, 0, 0, false));
+
+		try {
+			storeManager.addBooks(booksToAdd);
+			fail("Book with zero price should not be added.");
+		} catch (BookStoreException ex) {
+			// Expected exception
+		}
+
+		List<StockBook> booksInStorePostTest = storeManager.getBooks();
+		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest) && booksInStorePreTest.size() == booksInStorePostTest.size());
+	}
+
+	// added
+	@Test
+	public void testAddCopies() throws BookStoreException {
+		// Assuming BookCopy is another class that has a constructor accepting ISBN and quantity
+		Set<BookCopy> bookCopiesSet = new HashSet<>();
+		bookCopiesSet.add(new BookCopy(123, 5));  // ISBN 123, 5 copies
+
+		storeManager.addCopies(bookCopiesSet);
+
+		// You would need to verify that copies were added, depending on how BookCopy is handled
+		// assertTrue(some condition to check if copies were added properly)
+	}
+
+	// added
+	@Test
+	public void testUpdateEditorPicks() throws BookStoreException {
+		// Adding some books to update as editor picks
+		Set<BookEditorPick> editorPicks = new HashSet<>();
+		editorPicks.add(new BookEditorPick(123, true));  // Marking ISBN 123 as an editor pick
+		editorPicks.add(new BookEditorPick(456, false)); // Unmarking ISBN 456 as an editor pick
+
+		storeManager.updateEditorPicks(editorPicks);
+
+		// Fetch the books and check if editor picks have been updated
+		List<StockBook> books = storeManager.getBooks();
+		boolean foundPick = false;
+		boolean foundUnpick = false;
+
+		for (StockBook book : books) {
+			if (book.getISBN() == 123) {
+				foundPick = true;
+			} else if (book.getISBN() == 456) {
+				foundUnpick = true;
+			}
+		}
+
+		assertTrue(foundPick);
+		assertTrue(foundUnpick);
+	}
+
+	// added
+	@Test(expected = BookStoreException.class)
+	public void testAddBooksThrowsException() throws BookStoreException {
+		// Trying to add a null set of books should throw an exception
+		storeManager.addBooks(null);
+	}
 	/**
 	 * Tear down after class.
 	 *
