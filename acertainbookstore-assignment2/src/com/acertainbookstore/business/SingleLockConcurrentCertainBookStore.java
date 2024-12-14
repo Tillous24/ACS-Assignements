@@ -285,7 +285,7 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 					}
 					throw new BookStoreException(BookStoreConstants.BOOK + BookStoreConstants.NOT_AVAILABLE);
 				} finally {
-					lock.readLock().unlock(); // added
+					lock.writeLock().unlock(); // added
 				}
 			}
 			lock.writeLock().lock(); // added

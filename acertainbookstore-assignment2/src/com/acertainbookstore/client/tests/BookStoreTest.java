@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.*;
 import java.util.stream.Collectors; // added
 
 import org.junit.After;
@@ -407,8 +408,8 @@ public class BookStoreTest {
 		isbns.add(TEST_ISBN + 1);
 		isbns.add(TEST_ISBN + 2);
 
-		// List<StockBook> retrievedBooks = client.getBooksByISBN(isbns);
-		// assertTrue(retrievedBooks.containsAll(booksToAdd) && retrievedBooks.size() == booksToAdd.size());
+		List<StockBook> retrievedBooks = storeManager.getBooksByISBN(isbns);
+		assertTrue(retrievedBooks.containsAll(booksToAdd) && retrievedBooks.size() == booksToAdd.size());
 	}
 
 	/**
@@ -738,6 +739,106 @@ public class BookStoreTest {
 		assertTrue(books.size() == 2);
 	}
 
+	// Test for dirty read
+	@Test
+	public void testDirtyRead() throws InterruptedException, ExecutionException {
+
+		// Add initial book to the store
+		Set<StockBook> books = new HashSet<>();
+		books.add(new ImmutableStockBook(TEST_ISBN + 1, "The Art of Computer Programming", "Donald Knuth", (float) 300, 10, 0, 0, 0, false));
+		try{
+			storeManager.addBooks(books);
+		}
+		catch (BookStoreException ignored) {
+			fail("Exception when adding book to store");
+		}
+
+		ExecutorService executor = Executors.newFixedThreadPool(2);
+
+		// Writer thread - updates the number of copies
+		executor.submit(() -> {
+			try {
+				Set<BookCopy> copies = new HashSet<>();
+				copies.add(new BookCopy(TEST_ISBN + 1, 5)); // Add 5 more copies
+				storeManager.addCopies(copies);
+			} catch (BookStoreException e) {
+				e.printStackTrace();
+			}
+		});
+
+		// Reader thread - tries to read the book's state during the write
+		Future<List<StockBook>> readerResult = executor.submit(() -> {
+			try {
+				return storeManager.getBooks();
+			} catch (Exception e) {
+				e.printStackTrace();
+				return null;
+			}
+		});
+
+		executor.shutdown();
+		executor.awaitTermination(5, TimeUnit.SECONDS);
+
+		// Verify the reader does not see an intermediate state
+		List<StockBook> booksAfter = readerResult.get();
+		StockBook book = booksAfter.get(0);
+		// The reader should either see the original state or the fully updated state
+		assertTrue(book.getNumCopies() == 10 || book.getNumCopies() == 15);
+	}
+
+	// Test for dirty write
+	@Test
+	public void testDirtyWrite() throws InterruptedException {
+
+		// Add initial book to the store
+		Set<StockBook> books = new HashSet<>();
+		books.add(new ImmutableStockBook(TEST_ISBN + 1, "The Art of Computer Programming", "Donald Knuth", (float) 300, 10, 0, 0, 0, false));
+		try{
+			storeManager.addBooks(books);
+		}
+		catch (BookStoreException ignored) {
+			fail("Exception when adding book to store");
+		}
+
+		ExecutorService executor = Executors.newFixedThreadPool(2);
+
+		// Writer thread 1 - adds 5 copies
+		executor.submit(() -> {
+			try {
+				Set<BookCopy> copies = new HashSet<>();
+				copies.add(new BookCopy(TEST_ISBN + 1, 5)); // Add 5 more copies
+				storeManager.addCopies(copies);
+			} catch (BookStoreException e) {
+				e.printStackTrace();
+			}
+		});
+
+		// Writer thread 2 - removes 3 copies
+		executor.submit(() -> {
+			try {
+				Set<BookCopy> copies = new HashSet<>();
+				copies.add(new BookCopy(TEST_ISBN + 1, -3)); // Remove 3 copies
+				storeManager.addCopies(copies);
+			} catch (BookStoreException e) {
+				e.printStackTrace();
+			}
+		});
+
+		executor.shutdown();
+		executor.awaitTermination(5, TimeUnit.SECONDS);
+
+		// Verify the final number of copies is consistent
+		try{
+			List<StockBook> booksAfter = storeManager.getBooks();
+			StockBook book = booksAfter.get(0);
+			// Final number of copies should be 10 + 5 - 3 = 12
+			assertEquals(12, book.getNumCopies());
+		}
+		catch (BookStoreException ignored) {
+			fail("Exception when asserting");
+		}
+
+	}
 	/**
 	 * Tests the behavior when trying to add the same ISBN with different titles.
 	 *
@@ -764,7 +865,7 @@ public class BookStoreTest {
 	//}
 
 
-/**
+	/**
 	 * Tear down after class.
 	 *
 	 * @throws BookStoreException
