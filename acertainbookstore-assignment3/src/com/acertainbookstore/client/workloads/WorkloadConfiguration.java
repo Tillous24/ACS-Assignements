@@ -3,6 +3,8 @@ package com.acertainbookstore.client.workloads;
 import com.acertainbookstore.interfaces.BookStore;
 import com.acertainbookstore.interfaces.StockManager;
 
+import java.util.Random;
+
 /**
  * 
  * WorkloadConfiguration represents the configuration parameters to be used by

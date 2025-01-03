@@ -1,3 +1,6 @@
+/**
+ * 
+ */
 package com.acertainbookstore.client.workloads;
 
 import java.util.ArrayList;
@@ -15,9 +18,11 @@ import com.acertainbookstore.utils.BookStoreConstants;
 import com.acertainbookstore.utils.BookStoreException;
 
 /**
+ * 
  * CertainWorkload class runs the workloads by different workers concurrently.
  * It configures the environment for the workers using WorkloadConfiguration
  * objects and reports the metrics
+ * 
  */
 public class CertainWorkload {
 
@@ -32,7 +37,7 @@ public class CertainWorkload {
 		List<Future<WorkerRunResult>> runResults = new ArrayList<Future<WorkerRunResult>>();
 
 		// Initialize the RPC interfaces if its not a localTest, the variable is
-		// overridden if the property is set
+		// overriden if the property is set
 		String localTestProperty = System
 				.getProperty(BookStoreConstants.PROPERTY_KEY_LOCAL_TEST);
 		localTest = (localTestProperty != null) ? Boolean
@@ -77,63 +82,35 @@ public class CertainWorkload {
 			((StockManagerHTTPProxy) stockManager).stop();
 		}
 
-		// Report the metrics
 		reportMetric(workerRunResults);
 	}
 
 	/**
 	 * Computes the metrics and prints them
-	 *
+	 * 
 	 * @param workerRunResults
 	 */
 	public static void reportMetric(List<WorkerRunResult> workerRunResults) {
-		// Aggregate the total number of successful interactions, total time taken,
-		// and other relevant metrics
-		int totalSuccessfulInteractions = 0;
-		int totalRuns = 0;
-		long totalElapsedTimeInNanoSecs = 0;
-		int totalFrequentBookStoreInteractions = 0;
-		int successfulFrequentBookStoreInteractions = 0;
-
-		// Loop through each worker's results and aggregate
-		for (WorkerRunResult result : workerRunResults) {
-			totalSuccessfulInteractions += result.getSuccessfulInteractions();
-			totalRuns += result.getTotalRuns();
-			totalElapsedTimeInNanoSecs += result.getElapsedTimeInNanoSecs();
-			successfulFrequentBookStoreInteractions += result
-					.getSuccessfulFrequentBookStoreInteractionRuns();
-			totalFrequentBookStoreInteractions += result
-					.getTotalFrequentBookStoreInteractionRuns();
-		}
-
-		// Calculate throughput (successful interactions / total time taken)
-		double throughput = totalRuns == 0 ? 0 : (double) totalSuccessfulInteractions / totalElapsedTimeInNanoSecs;
-
-		// Calculate average latency (total elapsed time / total successful interactions)
-		double averageLatency = totalSuccessfulInteractions == 0 ? 0 : (double) totalElapsedTimeInNanoSecs / totalSuccessfulInteractions;
-
-		// Calculate frequency of successful frequent interactions
-		double frequentInteractionRate = totalFrequentBookStoreInteractions == 0 ? 0
-				: (double) successfulFrequentBookStoreInteractions
-				/ totalFrequentBookStoreInteractions;
-
-		// Print out the results
-		System.out.println("Total Successful Interactions: " + totalSuccessfulInteractions);
-		System.out.println("Total Interactions: " + totalRuns);
-		System.out.println("Total Time Taken (ms): " + (totalElapsedTimeInNanoSecs / 1_000_000));
-		System.out.println("Throughput (successful interactions per nanosecond): " + throughput);
-		System.out.println("Average Latency (nanoseconds per interaction): " + averageLatency);
-		System.out.println("Frequent Interaction Success Rate: " + frequentInteractionRate);
+		// TODO: You should aggregate metrics and output them for plotting here
 	}
 
 	/**
 	 * Generate the data in bookstore before the workload interactions are run
-	 *
+	 * 
 	 * Ignores the serverAddress if its a localTest
+	 * 
 	 */
 	public static void initializeBookStoreData(BookStore bookStore,
-											   StockManager stockManager) throws BookStoreException {
+			StockManager stockManager) throws Exception {
 
 		// TODO: You should initialize data for your bookstore here
-	}
+
+		// Getting WorkloadConfiguration
+		WorkloadConfiguration config = new WorkloadConfiguration(bookStore, stockManager);
+
+		// the number of books in the initial set
+		int n = 1000;
+		// adding n random generated books to the store
+		stockManager.addBooks(config.getBookSetGenerator().nextSetOfStockBooks(n));
+    }
 }

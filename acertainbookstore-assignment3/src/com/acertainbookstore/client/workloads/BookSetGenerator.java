@@ -1,117 +1,119 @@
 package com.acertainbookstore.client.workloads;
 
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
+
+import com.acertainbookstore.business.ImmutableStockBook;
 import com.acertainbookstore.business.StockBook;
 
 /**
- * Helper class to generate stockbooks and isbns modeled similar to Random
+ * Helper class to generate stockbooks and isbns modelled similar to Random
  * class
  */
 public class BookSetGenerator {
 
-    private Random random;
+	public BookSetGenerator() {
+		// TODO Auto-generated constructor stub
+	}
 
-    public BookSetGenerator() {
-        this.random = new Random();
-    }
+	/**
+	 * Returns num randomly selected isbns from the input set
+	 *
+	 * @param isbns : the original set of isbns to choose from
+	 * @param num : the number of random isbns to return
+	 * @return A set of isbns (integers)
+	 */
+	public Set<Integer> sampleFromSetOfISBNs(Set<Integer> isbns, int num) {
+		if (num > isbns.size()) {
+			return isbns;
+		}
+		else {
+			List<Integer> isbnList = new ArrayList<Integer>();
+			Collections.shuffle(isbnList);
 
-    /**
-     * Returns num randomly selected isbns from the input set
-     * 
-     * @param isbns The input set of ISBNs
-     * @param num   The number of ISBNs to select
-     * @return A set containing num randomly selected ISBNs
-     */
-    public Set<Integer> sampleFromSetOfISBNs(Set<Integer> isbns, int num) {
-        Set<Integer> selectedISBNs = new HashSet<>();
-        if (isbns == null || isbns.isEmpty() || num <= 0) {
-            return selectedISBNs;
-        }
+			// Select the first n elements from te shuffled list
+			return  new HashSet<Integer>(isbnList.subList(0,num));
+		}
+	}
 
-        Integer[] isbnArray = isbns.toArray(new Integer[0]);
-        while (selectedISBNs.size() < num && selectedISBNs.size() < isbns.size()) {
-            int randomIndex = random.nextInt(isbnArray.length);
-            selectedISBNs.add(isbnArray[randomIndex]);
-        }
+	/**
+	 * Return num stock books. For now return an ImmutableStockBook
+	 * 
+	 * @param num : the number of books in set
+	 * @return Set<StockBook>: a set of random created books
+	 */
+	public Set<StockBook> nextSetOfStockBooks(int num) {
+		Set<StockBook> books = new HashSet<StockBook>();
 
-        return selectedISBNs;
-    }
+		for (int i = 0; i < num; i++) {
+			books.add(getRandomStockBook());
+		}
+		return books;
+	}
 
-    /**
-     * Return num stock books. For now return an ImmutableStockBook
-     * 
-     * @param num The number of StockBook objects to generate
-     * @return A set of randomly generated StockBook objects
-     */
-    public Set<StockBook> nextSetOfStockBooks(int num) {
-        Set<StockBook> stockBooks = new HashSet<>();
-        if (num <= 0) {
-            return stockBooks;
-        }
+	public StockBook getRandomStockBook() {
+		return  new ImmutableStockBook(
+				getRandomISBN(),
+				getRandomTitle(),
+				getRandomAuthor(),
+				getRandomPrice(),
+				getRandomCopies(),
+				0, 0,0,
+				getRandomEditorPicks()
+		);
+	}
+	private int getRandomISBN(){
+		Random rand = new Random();
+		int min = 1000000;
+		int max = 9999999;
+		return rand.nextInt((max - min) + 1) + min;
+	}
 
-        for (int i = 0; i < num; i++) {
-            int isbn = 100000 + random.nextInt(900000); // Random 6-digit ISBN
-            String title = "Book Title " + isbn;
-            String author = "Author " + isbn;
-            float price = 10.0f + random.nextFloat() * 90.0f; // Random price between 10 and 100
-            int numCopies = 1 + random.nextInt(100); // Random number of copies between 1 and 100
-            boolean editorPick = random.nextBoolean();
 
-            stockBooks.add(new StockBook() {
-                @Override
-                public int getISBN() {
-                    return isbn;
-                }
+	private String getRandomTitle(){
+		Random rand = new Random();
+		int min = 10;
+		int max = 50;
+		int length = rand.nextInt((max - min) + 1) + min;
+		String title = "";
+		for (int i = 0; i < length; i++) {
+			title += (char) (rand.nextInt(26) + 'A');
+		}
+		return title;
+	}
 
-                @Override
-                public String getTitle() {
-                    return title;
-                }
+	private String getRandomAuthor(){
+		Random rand = new Random();
+		int min = 10;
+		int max = 50;
+		int length = rand.nextInt((max - min) + 1) + min;
+		String author = "";
+		for (int i = 0; i < length; i++) {
+			author += (char) (rand.nextInt(26) + 'A');
+		}
+		return author;
+	}
 
-                @Override
-                public String getAuthor() {
-                    return author;
-                }
+	private float getRandomPrice(){
+		Random rand = new Random();
+		int min = 500;
+		int max = 15000;
+		int price = rand.nextInt((max - min) + 1) + min;
+		return price / 100f;
+	}
 
-                @Override
-                public float getPrice() {
-                    return price;
-                }
+	private int getRandomCopies(){
+		Random rand = new Random();
+		int min = 1;
+		int max = 20;
+		return rand.nextInt((max - min) + 1) + min;
+	}
 
-                @Override
-                public long getTotalRating() {
-                    return 0; // Default value
-                }
-
-                @Override
-                public long getNumTimesRated() {
-                    return 0; // Default value
-                }
-
-                @Override
-                public int getNumCopies() {
-                    return numCopies;
-                }
-
-                @Override
-                public long getNumSaleMisses() {
-                    return 0; // Default value
-                }
-
-                @Override
-                public float getAverageRating() {
-                    return 0.0f; // Default value
-                }
-
-                @Override
-                public boolean isEditorPick() {
-                    return editorPick;
-                }
-            });
-        }
-
-        return stockBooks;
-    }
+	/**
+	 * Choose editor picks with 10% probability
+	 * @return Boolean value
+	 */
+	private boolean getRandomEditorPicks(){
+		Random rand = new Random();
+		return rand.nextInt(10) == 0;
+	}
 }
