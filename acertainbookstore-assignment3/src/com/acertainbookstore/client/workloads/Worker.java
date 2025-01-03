@@ -3,12 +3,10 @@
  */
 package com.acertainbookstore.client.workloads;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 
+import com.acertainbookstore.business.BookCopy;
 import com.acertainbookstore.business.StockBook;
 import com.acertainbookstore.utils.BookStoreException;
 
@@ -137,8 +135,21 @@ public class Worker implements Callable<WorkerRunResult> {
 		// Getting the number of books in the random set of books
 		int n = configuration.getNumBooksToAdd();
 
+		// the number of copies to add
+		int copies = 20;
 
-    }
+		// getting books from store
+		List<StockBook> booksInStore = configuration.getStockManager().getBooks();
+
+		// sorting list with lambda expression
+		booksInStore.sort((book1, book2) -> Integer.compare(book1.getNumCopies(), book2.getNumCopies()));
+
+		Set<BookCopy> copiesToAdd = new HashSet<>();
+		for (StockBook book : booksInStore.subList(0, n)) {
+			copiesToAdd.add(new BookCopy(book.getISBN(), copies));
+		}
+		configuration.getStockManager().addCopies(copiesToAdd);
+	}
 
     /**
      * Runs the customer interaction
