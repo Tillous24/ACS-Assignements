@@ -113,6 +113,7 @@ public class CertainWorkload {
 		// Calculating key values
 		float totalHitRatio = successRuns / (float) totalRuns;
 		float totalFrequentBookStoreInteractionHitRatio = successfulFrequentBookStoreInteractionRuns / (float) totalFrequentBookStoreInteractionRuns;
+		float customerInteractionRatio = totalFrequentBookStoreInteractionRuns / (float) totalRuns;
 
 		// Printing values to screen
 		System.out.println("--------------------------------------------");
@@ -120,6 +121,7 @@ public class CertainWorkload {
 		System.out.println("Hit Ratio: " + totalHitRatio);
 		System.out.println("Frequent BookStore Interaction Hit Ratio: " + totalFrequentBookStoreInteractionHitRatio);
 		System.out.println("Aggregated Throughput: " + aggregatedThroughput);
+		System.out.println("Customer Interactions Ratio: " + customerInteractionRatio);
 		System.out.println("--------------------------------------------");
 		System.out.println("DETAILS");
 		System.out.println("Total runs: " + totalRuns);
