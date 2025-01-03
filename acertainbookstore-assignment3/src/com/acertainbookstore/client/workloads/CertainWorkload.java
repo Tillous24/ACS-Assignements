@@ -92,6 +92,42 @@ public class CertainWorkload {
 	 */
 	public static void reportMetric(List<WorkerRunResult> workerRunResults) {
 		// TODO: You should aggregate metrics and output them for plotting here
+
+		int totalRuns = 0;
+		int successRuns = 0;
+		long elapsedTimeInNanoSecs = 0;
+		int totalFrequentBookStoreInteractionRuns = 0;
+		int successfulFrequentBookStoreInteractionRuns = 0;
+		float aggregatedThroughput = 0f;
+
+		// aggregating results of all workers
+		for (WorkerRunResult runResult : workerRunResults) {
+			totalRuns += runResult.getTotalRuns();
+			successRuns += runResult.getSuccessfulInteractions();
+			elapsedTimeInNanoSecs += runResult.getElapsedTimeInNanoSecs();
+			totalFrequentBookStoreInteractionRuns += runResult.getTotalFrequentBookStoreInteractionRuns();
+			successfulFrequentBookStoreInteractionRuns += runResult.getSuccessfulFrequentBookStoreInteractionRuns();
+			aggregatedThroughput += runResult.getSuccessfulInteractions() / (float) runResult.getElapsedTimeInNanoSecs();
+		}
+
+		// Calculating key values
+		float totalHitRatio = successRuns / (float) totalRuns;
+		float totalFrequentBookStoreInteractionHitRatio = successfulFrequentBookStoreInteractionRuns / (float) totalFrequentBookStoreInteractionRuns;
+
+		// Printing values to screen
+		System.out.println("--------------------------------------------");
+		System.out.println("SUMMARY");
+		System.out.println("Hit Ratio: " + totalHitRatio);
+		System.out.println("Frequent BookStore Interaction Hit Ratio: " + totalFrequentBookStoreInteractionHitRatio);
+		System.out.println("Aggregated Throughput: " + aggregatedThroughput);
+		System.out.println("--------------------------------------------");
+		System.out.println("DETAILS");
+		System.out.println("Total runs: " + totalRuns);
+		System.out.println("Success runs: " + successRuns);
+		System.out.println("Elapsed time in Nanoseconds: " + elapsedTimeInNanoSecs);
+		System.out.println("Total Frequent BookStore Interaction runs: " + totalFrequentBookStoreInteractionRuns);
+		System.out.println("Success Frequent BookStore Interaction runs: " + successfulFrequentBookStoreInteractionRuns);
+		System.out.println("--------------------------------------------");
 	}
 
 	/**
