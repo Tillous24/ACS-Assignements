@@ -27,7 +27,7 @@ public class BookSetGenerator {
 			return isbns;
 		}
 		else {
-			List<Integer> isbnList = new ArrayList<Integer>();
+			List<Integer> isbnList = new ArrayList<Integer>(isbns);
 			Collections.shuffle(isbnList);
 
 			// Select the first n elements from te shuffled list
