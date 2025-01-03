@@ -6,7 +6,9 @@ package com.acertainbookstore.client.workloads;
 import java.util.*;
 import java.util.concurrent.Callable;
 
+import com.acertainbookstore.business.Book;
 import com.acertainbookstore.business.BookCopy;
+import com.acertainbookstore.business.BookEditorPick;
 import com.acertainbookstore.business.StockBook;
 import com.acertainbookstore.utils.BookStoreException;
 
@@ -158,6 +160,24 @@ public class Worker implements Callable<WorkerRunResult> {
      */
     private void runFrequentBookStoreInteraction() throws BookStoreException {
 	// TODO: Add code for Customer Interaction
+
+		// getting editor picks
+		List<Book> editorPicks = configuration.getBookStore().getEditorPicks(configuration.getNumEditorPicksToGet());
+
+		// creating set of ISBNs
+		Set<Integer> isbns = new HashSet<>();
+		for (Book book : editorPicks) {
+			isbns.add(book.getISBN());
+		}
+
+		// getting a random subset
+		Set<Integer> sample = configuration.getBookSetGenerator().sampleFromSetOfISBNs(isbns, configuration.getNumBooksToBuy());
+
+		Set<BookCopy> booksToBuy = new HashSet<>();
+		for (Integer isbn : sample) {
+			booksToBuy.add(new BookCopy(isbn, 1));
+		}
+		configuration.getStockManager().addCopies(booksToBuy);
     }
 
 }
